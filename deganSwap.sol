@@ -1,60 +1,12 @@
-/**
- *Submitted for verification at BscScan.com on 2021-03-03
- */
-
 // SPDX-License-Identifier: MIT
-
-/*   BNBStake - investment platform based on Binance Smart Chain blockchain smart-contract technology. Safe and legit!
- *   The only official platform of original TronStake team! All other platforms with the same contract code are FAKE!
- *
- *    ______ _   _ ______  _____ _        _
- *    | ___ \ \ | || ___ \/  ___| |      | |
- *    | |_/ /  \| || |_/ /\ `--.| |_ __ _| | _____      BNBStake.app
- *    | ___ \ . ` || ___ \ `--. \ __/ _` | |/ / _ \     by AV
- *    | |_/ / |\  || |_/ //\__/ / || (_| |   <  __/
- *    \____/\_| \_/\____/ \____/ \__\__,_|_|\_\___|
- *   ┌───────────────────────────────────────────────────────────────────────┐
- *   │   Website: https://bnbstake.app                                       │
- *   │                                                                       │
- *   │   Telegram Live Support: @bnbstake_support                            |
- *   │   Telegram Public Group: https://t.me/bnb_stake                       |
- *   |                                                                       |
- *   |   E-mail: admin@bnbstake.app                                          |
- *   └───────────────────────────────────────────────────────────────────────┘
- *
- *   [USAGE INSTRUCTION]
- *
- *   1) Connect browser extension Metamask (see help: https://academy.binance.com/en/articles/connecting-metamask-to-binance-smart-chain )
- *   2) Choose one of the tariff plans, enter the BNB amount (0.05 BNB minimum) using our website "Stake BNB" button
- *   3) Wait for your earnings
- *   4) Withdraw earnings any time using our website "Withdraw" button
- *
- *   [INVESTMENT CONDITIONS]
- *
- *   - Basic interest rate: +0.5% every 24 hours (~0.02% hourly) - only for new deposits
- *   - Minimal deposit: 0.05 BNB, no maximal limit
- *   - Total income: based on your tarrif plan (from 5% to 8% daily!!!) + Basic interest rate !!!
- *   - Earnings every moment, withdraw any time (if you use capitalization of interest you can withdraw only after end of your deposit)
- *
- *   [AFFILIATE PROGRAM]
- *
- *   - 3-level referral commission: 5% - 2.5% - 0.5%
- *
- *   [FUNDS DISTRIBUTION]
- *
- *   - 82% Platform main balance, participants payouts
- *   - 8% Advertising and promotion expenses
- *   - 8% Affiliate program bonuses
- *   - 2% Support work, technical functioning, administration fee
- */
 
 pragma solidity >=0.4.22 <0.9.0;
 
-contract BNBStake {
+contract DeganSwap {
     using SafeMath for uint256;
 
     uint256 public constant INVEST_MIN_AMOUNT = 0.05 ether;
-    uint256[] public REFERRAL_PERCENTS = [50, 25, 5];
+    uint256 public REFERRAL_PERCENTS = 50;
     uint256 public constant PROJECT_FEE = 100;
     uint256 public constant PERCENT_STEP = 5;
     uint256 public constant PERCENTS_DIVIDER = 1000;
@@ -83,7 +35,7 @@ contract BNBStake {
         Deposit[] deposits;
         uint256 checkpoint;
         address referrer;
-        uint256[3] levels;
+        uint256 levels;
         uint256 bonus;
         uint256 totalBonus;
     }
@@ -111,18 +63,18 @@ contract BNBStake {
     );
     event FeePayed(address indexed user, uint256 totalAmount);
 
-    constructor(address payable wallet, uint256 startDate) public {
+    constructor(address payable wallet, uint256 startDate) {
         require(!isContract(wallet));
         require(startDate > 0);
         commissionWallet = wallet;
         startUNIX = startDate;
 
-        plans.push(Plan(14, 80));
-        plans.push(Plan(21, 65));
-        plans.push(Plan(28, 50));
-        plans.push(Plan(14, 80));
-        plans.push(Plan(21, 65));
-        plans.push(Plan(28, 50));
+        plans.push(Plan(3, 50));
+        plans.push(Plan(7, 75));
+        plans.push(Plan(11, 100));
+        plans.push(Plan(3, 50));
+        plans.push(Plan(7, 75));
+        plans.push(Plan(11, 100));
     }
 
     function invest(address referrer, uint8 plan) public payable {
@@ -141,30 +93,19 @@ contract BNBStake {
             }
 
             address upline = user.referrer;
-            for (uint256 i = 0; i < 3; i++) {
-                if (upline != address(0)) {
-                    users[upline].levels[i] = users[upline].levels[i].add(1);
-                    upline = users[upline].referrer;
-                } else break;
+            if (upline != address(0)) {
+                users[upline].levels = users[upline].levels.add(1);
+                upline = users[upline].referrer;
             }
         }
 
         if (user.referrer != address(0)) {
             address upline = user.referrer;
-            for (uint256 i = 0; i < 3; i++) {
-                if (upline != address(0)) {
-                    uint256 amount =
-                        msg.value.mul(REFERRAL_PERCENTS[i]).div(
-                            PERCENTS_DIVIDER
-                        );
-                    users[upline].bonus = users[upline].bonus.add(amount);
-                    users[upline].totalBonus = users[upline].totalBonus.add(
-                        amount
-                    );
-                    emit RefBonus(upline, msg.sender, amount);
-                    upline = users[upline].referrer;
-                } else break;
-            }
+            uint256 amount =
+                msg.value.mul(REFERRAL_PERCENTS).div(PERCENTS_DIVIDER);
+            users[upline].bonus = users[upline].bonus.add(amount);
+            users[upline].totalBonus = users[upline].totalBonus.add(amount);
+            emit RefBonus(upline, msg.sender, amount);
         }
 
         if (user.deposits.length == 0) {
@@ -325,17 +266,9 @@ contract BNBStake {
     function getUserDownlineCount(address userAddress)
         public
         view
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
+        returns (uint256)
     {
-        return (
-            users[userAddress].levels[0],
-            users[userAddress].levels[1],
-            users[userAddress].levels[2]
-        );
+        return (users[userAddress].levels);
     }
 
     function getUserReferralBonus(address userAddress)

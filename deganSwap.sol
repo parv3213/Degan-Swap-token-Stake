@@ -7,8 +7,9 @@ contract DeganSwap {
 
     uint256 public constant INVEST_MIN_AMOUNT = 0.05 ether;
     uint256 public REFERRAL_PERCENTS = 50;
-    uint256 public constant PROJECT_FEE = 100;
-    uint256 public constant PERCENT_STEP = 5;
+    uint256 public constant PROJECT_FEE = 90;
+    uint256 public constant DEVELOPER_FEE = 10;
+    uint256 public constant PERCENT_STEP = 3;
     uint256 public constant PERCENTS_DIVIDER = 1000;
     uint256 public constant TIME_STEP = 1 days;
 
@@ -44,6 +45,7 @@ contract DeganSwap {
 
     uint256 public startUNIX;
     address payable public commissionWallet;
+    address payable public developerWallet;
 
     event Newbie(address user);
     event NewDeposit(
@@ -63,10 +65,15 @@ contract DeganSwap {
     );
     event FeePayed(address indexed user, uint256 totalAmount);
 
-    constructor(address payable wallet, uint256 startDate) {
+    constructor(
+        address payable wallet,
+        address payable developerAddress,
+        uint256 startDate
+    ) {
         require(!isContract(wallet));
         require(startDate > 0);
         commissionWallet = wallet;
+        developerWallet = developerAddress;
         startUNIX = startDate;
 
         plans.push(Plan(3, 50));
@@ -81,9 +88,11 @@ contract DeganSwap {
         require(msg.value >= INVEST_MIN_AMOUNT);
         require(plan < 6, "Invalid plan");
 
-        uint256 fee = msg.value.mul(PROJECT_FEE).div(PERCENTS_DIVIDER);
-        commissionWallet.transfer(fee);
-        emit FeePayed(msg.sender, fee);
+        uint256 projectFee = msg.value.mul(PROJECT_FEE).div(PERCENTS_DIVIDER);
+        uint256 developerFee = msg.value.mul(PROJECT_FEE).div(PERCENTS_DIVIDER);
+        commissionWallet.transfer(projectFee);
+        developerWallet.transfer(developerFee);
+        emit FeePayed(msg.sender, projectFee.add(developerFee));
 
         User storage user = users[msg.sender];
 

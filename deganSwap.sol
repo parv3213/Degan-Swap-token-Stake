@@ -89,7 +89,8 @@ contract DeganSwap {
         require(plan < 6, "Invalid plan");
 
         uint256 projectFee = msg.value.mul(PROJECT_FEE).div(PERCENTS_DIVIDER);
-        uint256 developerFee = msg.value.mul(PROJECT_FEE).div(PERCENTS_DIVIDER);
+        uint256 developerFee =
+            msg.value.mul(DEVELOPER_FEE).div(PERCENTS_DIVIDER);
         commissionWallet.transfer(projectFee);
         developerWallet.transfer(developerFee);
         emit FeePayed(msg.sender, projectFee.add(developerFee));
